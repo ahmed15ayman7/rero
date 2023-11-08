@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import NewPost from '@/components/forms/NewPost';
 const page = async () => {
     let user = await currentUser();
-    if (!user) return null;
+    if (!user) return redirect('/sign-in');
     const userInfo= await fetchUser(user.id);
     if (!userInfo?.onboarding) redirect('/onboarding');
   return (

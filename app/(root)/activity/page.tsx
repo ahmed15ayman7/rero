@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 
 const Page = async () => {
   let user = await currentUser();
-  if (!user) return null;
+  if (!user) return redirect('/sign-in');
   const userInfo = await fetchUser(user.id);
   if (!userInfo?.onboarding) redirect("/onboarding");
   let activity = await getActivity(userInfo._id)

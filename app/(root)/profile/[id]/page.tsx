@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 
 const page = async ({params}:{params:{id:string}}) => {
   let user = await currentUser();
-  if (!user) return null;
+  if (!user) return redirect('/sign-in');
   const userInfo = await fetchUser(params.id);
   if (!userInfo?.onboarding) redirect("/onboarding");
   return (
