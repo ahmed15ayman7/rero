@@ -1,13 +1,26 @@
 "use server";
-
 import { FilterQuery, SortOrder } from "mongoose";
-
 import Community from "../models/community.model";
 import Post from "../models/post.models";
 import User from "../models/user.models";
-
-import { connectDB as connectToDB } from "@/mongoose";
-
+import { connectDB } from "@/mongoose";
+import { revalidatePath } from "next/cache";
+export interface CommunityData {
+  _id: string;
+  id: string;
+  username: string;
+  name: string;
+  bio: string;
+  image: string;
+  posts: string[];
+  members: {
+    _id: string;
+    id: string;
+    name: string;
+    username: string;
+    image: string;
+  }[];
+}
 export async function createCommunity(
   id: string,
   name: string,
@@ -17,7 +30,7 @@ export async function createCommunity(
   createdById: string // Change the parameter name to reflect it's an id
 ) {
   try {
-    connectToDB();
+    connectDB();
 
     // Find the user with the provided unique id
     const user = await User.findOne({ id: createdById });
@@ -42,38 +55,36 @@ export async function createCommunity(
     await user.save();
 
     return createdCommunity;
-  } catch (error) {
-    // Handle any errors
-    console.error("Error creating community:", error);
-    throw error;
+  } catch (error: any) {
+    console.log("Error creating community:", error);
   }
 }
 
 export async function fetchCommunityDetails(id: string) {
+  connectDB();
   try {
-    connectToDB();
-
-    const communityDetails = await Community.findOne({ id }).populate([
-      "createdBy",
-      {
-        path: "members",
-        model: User,
-        select: "name username image _id id",
-      },
-    ]);
+    let communityDetails: CommunityData | null = await Community.findOne({
+      id: id,
+    })
+      .populate([
+        "createdBy",
+        {
+          path: "members",
+          model: User,
+          select: "name username image _id id",
+        },
+      ])
+      .lean();
 
     return communityDetails;
-  } catch (error) {
-    // Handle any errors
-    console.error("Error fetching community details:", error);
-    throw error;
+  } catch (error: any) {
+    console.log("Error fetching community details:", error);
   }
 }
 
 export async function fetchCommunityPosts(id: string) {
+  connectDB();
   try {
-    connectToDB();
-
     const communityPosts = await Community.findById(id).populate({
       path: "posts",
       model: Post,
@@ -96,10 +107,8 @@ export async function fetchCommunityPosts(id: string) {
     });
 
     return communityPosts;
-  } catch (error) {
-    // Handle any errors
-    console.error("Error fetching community posts:", error);
-    throw error;
+  } catch (error: any) {
+    console.log("Error fetching community posts:", error);
   }
 }
 
@@ -115,64 +124,64 @@ export async function fetchCommunities({
   sortBy?: SortOrder;
 }) {
   try {
-    connectToDB();
-
-    // Calculate the number of communities to skip based on the page number and page size.
+    connectDB();
     const skipAmount = (pageNumber - 1) * pageSize;
-
-    // Create a case-insensitive regular expression for the provided search string.
     const regex = new RegExp(searchString, "i");
-
-    // Create an initial query object to filter communities.
     const query: FilterQuery<typeof Community> = {};
-
-    // If the search string is not empty, add the $or operator to match either username or name fields.
     if (searchString.trim() !== "") {
       query.$or = [
         { username: { $regex: regex } },
         { name: { $regex: regex } },
       ];
     }
-
-    // Define the sort options for the fetched communities based on createdAt field and provided sort order.
-    const sortOptions = { createdAt: sortBy };
-
-    // Create a query to fetch the communities based on the search and sort criteria.
-    const communitiesQuery = Community.find(query)
-      .sort(sortOptions)
+    const communitiesQ = Community.aggregate([{$match:query},
+      {$sample:{size:pageSize}},
+      { 
+        $lookup: {
+        from: 'users', 
+        localField: 'members',
+        foreignField: '_id',
+        as: 'members',
+      }
+    },
+      {
+        $project: {
+          _id: 1,
+          id: 1,
+          name: 1,
+          username: 1,
+          image:1,
+          members: { _id: 1,id:1,image:1 },
+        },
+      },
+    ])
+      .sort({ createdAt: sortBy })
       .skip(skipAmount)
-      .limit(pageSize)
-      .populate("members");
+      .limit(pageSize);
 
-    // Count the total number of communities that match the search criteria (without pagination).
     const totalCommunitiesCount = await Community.countDocuments(query);
-
-    const communities = await communitiesQuery.exec();
-
-    // Check if there are more communities beyond the current page.
+    let communities = await communitiesQ.exec();
     const isNext = totalCommunitiesCount > skipAmount + communities.length;
-
     return { communities, isNext };
-  } catch (error) {
-    console.error("Error fetching communities:", error);
-    throw error;
+  } catch (error: any) {
+    console.log("Error fetching communities:", error);
   }
 }
 
 export async function addMemberToCommunity(
   communityId: string,
-  memberId: string
+  memberId: string | undefined,
+  path: string,
+  isFriend: boolean
 ) {
   try {
-    connectToDB();
-
+    connectDB();
     // Find the community by its unique id
     const community = await Community.findOne({ id: communityId });
 
     if (!community) {
       console.log("Community not found");
     }
-
     // Find the user by their unique id
     const user = await User.findOne({ id: memberId });
 
@@ -186,18 +195,18 @@ export async function addMemberToCommunity(
     }
 
     // Add the user's _id to the members array in the community
+    isFriend?
+    user.communities.pop(community._id):
+    user.communities.push(community._id);
+    isFriend?
+    community.members.pop(user._id):
     community.members.push(user._id);
     await community.save();
-
-    // Add the community's _id to the communities array in the user
-    user.communities.push(community._id);
     await user.save();
-
-    return community;
-  } catch (error) {
-    // Handle any errors
-    console.error("Error adding member to community:", error);
-    throw error;
+    revalidatePath(path);
+    // return community;
+  } catch (error: any) {
+    console.log("Error adding member to community:", error);
   }
 }
 
@@ -206,7 +215,7 @@ export async function removeUserFromCommunity(
   communityId: string
 ) {
   try {
-    connectToDB();
+    connectDB();
     const userIdObject = await User.findOne({ id: userId }, { _id: 1 });
     const communityIdObject = await Community.findOne(
       { id: communityId },
@@ -234,10 +243,8 @@ export async function removeUserFromCommunity(
     );
 
     return { success: true };
-  } catch (error) {
-    // Handle any errors
-    console.error("Error removing user from community:", error);
-    throw error;
+  } catch (error: any) {
+    console.log("Error removing user from community:", error);
   }
 }
 
@@ -248,7 +255,7 @@ export async function updateCommunityInfo(
   image: string
 ) {
   try {
-    connectToDB();
+    connectDB();
 
     // Find the community by its _id and update the information
     const updatedCommunity = await Community.findOneAndUpdate(
@@ -261,16 +268,14 @@ export async function updateCommunityInfo(
     }
 
     return updatedCommunity;
-  } catch (error) {
-    // Handle any errors
-    console.error("Error updating community information:", error);
-    throw error;
+  } catch (error: any) {
+    console.log("Error updating community information:", error);
   }
 }
 
 export async function deleteCommunity(communityId: string) {
   try {
-    connectToDB();
+    connectDB();
     // Find the community by its ID and delete it
     const deletedCommunity = await Community.findOneAndDelete({
       id: communityId,
@@ -289,8 +294,7 @@ export async function deleteCommunity(communityId: string) {
     });
     await Promise.all(updateUserPromises);
     return deletedCommunity;
-  } catch (error) {
-    console.error("Error deleting community: ", error);
-    throw error;
+  } catch (error: any) {
+    console.log("Error deleting community: ", error);
   }
 }

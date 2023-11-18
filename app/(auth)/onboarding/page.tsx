@@ -5,11 +5,11 @@ import { redirect } from "next/navigation";
 import React from "react";
 interface usData {
   id: string | undefined;
-  objectID: string;
-  username: string;
+  objectID: string | undefined;
+  username: string |null|undefined;
   name: string;
   bio: string;
-  image: string;
+  image: string|undefined;
 }
 const Onboarding = async () => {
   let user = await currentUser();

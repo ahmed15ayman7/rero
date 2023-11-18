@@ -17,11 +17,11 @@ import { usePathname, useRouter } from 'next/navigation'
 interface props{
     userData:{
         id:string|undefined,
-        objectID:string,
-        username:string,
+        objectID:string|undefined,
+        username:string |null|undefined,
         name:string,
         bio:string,
-        image:string,
+        image:string|undefined,
     },
     btnTitle:string
 }
@@ -86,7 +86,6 @@ const AccountProfile = ({userData,btnTitle}:props) => {
     }
   return (
     <Form {...form}>
-
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}

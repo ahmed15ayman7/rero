@@ -1,8 +1,10 @@
 "use server";
 
 import { connectDB } from "@/mongoose";
-import { SortOrder } from "mongoose";
+import { currentUser } from "@clerk/nextjs";
+import { FilterQuery, SortOrder } from "mongoose";
 import { revalidatePath } from "next/cache";
+import Community from "../models/community.model";
 import Post from "../models/post.models";
 import User from "../models/user.models";
 interface props{
@@ -12,6 +14,24 @@ interface props{
     bio: string,
     image: string,
     path: string
+}
+export interface UserData{
+    _id: string,
+    id: string ,
+    username: string,
+    name: string,
+    bio: string,
+    image: string,
+    posts:string[],
+    communities:string[],
+    onboarding:boolean,
+    friends:{
+        _id:string,
+        id:string,
+        name:string,
+        username:string,
+        image:string,
+    }[]
 }
 export async function updateUser (
     { userId, username, name, bio, image, path}:props
@@ -34,30 +54,42 @@ export async function updateUser (
 export async function fetchUser (userId:string | undefined) {
     connectDB();
     try {
-        let user = await User.findOne({id:userId});
+        let user :UserData|null =  await User.findOne({id:userId})
+        .populate({
+            path: 'friends',
+            model:User,
+            select:'id image name username',
+          }).lean()
+        
+        console.log(user)
+        if(!user){
+            console.log("user not found");
+        }
         console.log("found user with id ")
     return user;
     } catch (error:any) {
         console.log(`not found user: ${error.message}`);
     }
-
 }
-export async function fetchAllUser ({userId,searchString='',pageNum=1, pageSize=20,sortBy='desc'}:{userId:string,searchString:string,pageNum:number, pageSize:number,sortBy?:SortOrder}) {
-    connectDB();
+export async function fetchAllUser ({searchString='',pageNum=1, pageSize=20,sortBy='desc'}:{searchString:string,pageNum:number, pageSize:number,sortBy?:SortOrder}) {
     try {
+        connectDB();
+        let user = await currentUser();
         let skipAmount =(pageNum-1)*pageSize;
-        let regax = new RegExp(searchString,'i')
-        let searchBy=[];
+        let regex = new RegExp(searchString,"i")
+        let query :FilterQuery<typeof User> ={id:{$ne:user?.id}};
         if (searchString.trim() !=='') {
-        searchBy.push({name:{$regax:regax}},{username:{$regax:regax}})
+            query.$or=[{name:{$regex:regex}},{username:{$regex:regex}}]
         }
-        let users = await  User.find({id:{$ne:userId},$or:searchBy})
+        let users = await  User.aggregate([{$match:query},
+            {$sample:{size:pageSize}},
+          ])
         .sort({createdAt:'desc'})
         .skip(skipAmount)
         .limit(pageSize)
         .exec();
-        const totalPosts = await Post.countDocuments({id:{$ne:userId},$or:searchBy});
-        let isNext= +totalPosts > skipAmount + users.length;
+        const totalUsers = await User.countDocuments(query);
+        let isNext= +totalUsers > skipAmount + users.length;
     return {users,isNext};
     } catch (error:any) {
         console.log(`not found user: ${error.message}`);
@@ -70,7 +102,7 @@ export async function fetchUserPosts (userId:string) {
         let posts = await User.findOne({id:userId}).populate({
             path:'posts',
             model:Post,
-            populate: {
+            populate:[ {
                 path:'children',
                 model:Post,
                 populate: {
@@ -78,7 +110,13 @@ export async function fetchUserPosts (userId:string) {
                     model:User,
                     select:'id name image'
                 }
+            },
+            {
+                path:'community',
+                model: Community,
+                select:'id name image'
             }
+        ]
         });
         return posts;
     } catch (error:any) {
@@ -98,7 +136,31 @@ export async function getActivity (userId:string) {
             select:'_id name image'
         })
         return replies;
-    }catch(e){
-    
+    }catch(e:any){
+        console.log(`not found user: ${e.message}`);
+        
     }
+}
+export async function addFriend (
+    {finalF,finalU,friendId, userId,path,isFriend}:{userId?:string,friendId:string,finalF:string,finalU:string,path:string,isFriend:boolean}
+){
+    connectDB();
+    try {
+
+    const user = await User.findById(userId)
+    const friend = await User.findById(friendId)
+    if(!user || !friend){
+        console.log("user not found");
+    }
+    isFriend?friend.friends.pop(userId):
+    friend.friends.push(userId);
+    isFriend?user.friends.pop(friendId):
+    user.friends.push(friendId);
+    await friend.save();
+    await user.save();
+    console.log('success to add friend');
+    revalidatePath(path);
+   } catch (error:any) {
+    console.log(`failed to add friend: ${error.message}`);
+   }
 }

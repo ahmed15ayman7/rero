@@ -11,7 +11,7 @@ const page = async () => {
   return (
     <div>
       
-        <NewPost userId={`${userInfo?._id}`}/>
+        <NewPost userId={`${userInfo?._id}`} image={userInfo?.image} name={userInfo?.name} username={userInfo?.username}/>
     </div>
   )
 }

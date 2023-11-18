@@ -1,11 +1,19 @@
 import mongoose from "mongoose";
 
- const userSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema({
     id:{type: 'string', required: true},
     username: {type:'string', required: true},
     name: {type:'string', required: true},
     image: {type:'string'},
     bio:{type:'string'},
+    friends:[
+        
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User'
+            }
+        
+    ],
     posts: [
         {
             type: mongoose.Schema.Types.ObjectId,

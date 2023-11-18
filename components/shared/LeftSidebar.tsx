@@ -25,7 +25,7 @@ const LeftSidebar = () => {
       }
       )}
         </div>
-        <div className=" px-6">
+        <div className="px-10">
           <SignedIn>
             <SignOutButton signOutCallback={()=>router.push('/sign-in')}>
               <div className="flex gap-4 cursor-pointer">

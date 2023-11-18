@@ -1,9 +1,10 @@
-import React from 'react'
-
-const page = () => {
+"use client";
+import Search from "@/components/shared/Search";
+const Page = () => {
+  
   return (
-    <div>page</div>
-  )
-}
+    <Search typeS="community"/>
+  );
+};
 
-export default page
+export default Page;

@@ -7,6 +7,7 @@ import Topbar from '@/components/shared/Topbar';
 import BottomSidebar from '@/components/shared/Bottombar';
 import LeftSidebar from '@/components/shared/LeftSidebar';
 import RightSidebar from '@/components/shared/RightSidebar';
+
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -25,7 +26,7 @@ export default function RootLayout({
       appearance={{
         baseTheme: dark,
       }}
-    >
+      >
     <html lang="en">
       <body className={inter.className}>
       <Topbar/>
@@ -43,6 +44,5 @@ export default function RootLayout({
         </body>
     </html>
     </ClerkProvider>
-    
   )
 }
