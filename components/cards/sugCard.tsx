@@ -30,7 +30,7 @@ export let SugCard=({result,type,userInfo}:{result:any[]|undefined,type:string,u
             let checked=type==='users'?isFriend:isSubscribed;
             let route=type==='users'?`/profile/${result?.id}`:`/communities/${result?.id}`
             return (
-              <article className='user-card'>
+              <article className='user-card' key={result?._id}>
                 <div className="user-card_avatar">
                 <Image src={result?.image} alt={result?.name} height={48} width={48} className=' cursor-pointer rounded-full object-contain' onClick={()=>navigate.push(route)}/>
             <div className=" flex-1 text-ellipsis">

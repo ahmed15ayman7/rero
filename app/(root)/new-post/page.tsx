@@ -3,17 +3,19 @@ import { currentUser } from '@clerk/nextjs'
 import { fetchUser } from '@/lib/actions/user.actions';
 import { redirect } from 'next/navigation';
 import NewPost from '@/components/forms/NewPost';
-const page = async () => {
+const Page = async () => {
     let user = await currentUser();
     if (!user) return redirect('/sign-in');
     const userInfo= await fetchUser(user.id);
     if (!userInfo?.onboarding) redirect('/onboarding');
+
+
   return (
-    <div>
+    <div >
       
-        <NewPost userId={`${userInfo?._id}`} image={userInfo?.image} name={userInfo?.name} username={userInfo?.username}/>
+        <NewPost userId={`${userInfo?._id}`} image={userInfo?.image} name={userInfo?.name} username={userInfo?.username} />
     </div>
   )
 }
 
-export default page
+export default Page

@@ -1,3 +1,4 @@
+'use client'
 import { formatDateString } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
@@ -24,6 +25,7 @@ interface parms {
       _id: string;
       id: string;
       image: string;
+      name: string;
     };
   }[];
   isComment?: boolean;
@@ -40,6 +42,7 @@ const CardPost = ({
   comments,
   isComment,
 }: parms) => {
+  
   return (
     <article
       className={` flex w-full flex-col rounded-xl ${
@@ -83,16 +86,18 @@ const CardPost = ({
                     className=" hover:scale-125 cursor-pointer object-contain"
                   />
                 </Link>
+                <Link href={`/new-post?p=${content}`}>
                 <Image
-                  src="/assets/repost.svg"
-                  alt="heart"
+                  src="/assets/share.svg"
+                  alt="repost"
                   height={20}
                   width={20}
                   className="hover:scale-125 cursor-pointer object-contain"
-                />
+                  />
+                  </Link>
                 <Image
-                  src="/assets/share.svg"
-                  alt="heart"
+                  src="/assets/repost.svg"
+                  alt="share"
                   height={20}
                   width={20}
                   className="hover:scale-125 cursor-pointer object-contain"
@@ -132,7 +137,6 @@ const CardPost = ({
             if (comment?.author.id === author.id) {
               return null;
             }
-
             if (index > 0) {
               if (
                 comment?.author._id === arr[index - 1]?.author._id ||
@@ -161,7 +165,7 @@ const CardPost = ({
                     : index !== 0
                     ? "-ml-5"
                     : ""
-                } rounded-full object-cover`}
+                } rounded-full object-cover `}
               />
             );
           })}

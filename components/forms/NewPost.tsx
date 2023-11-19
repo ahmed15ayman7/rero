@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import * as z  from 'zod'
 import { useOrganization } from '@clerk/nextjs'
 import { Textarea } from '@/components/ui/textarea'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { PostValidation } from '@/lib/validations/post'
 
 import { createPost } from '@/lib/actions/post.actions'
@@ -16,12 +16,13 @@ const NewPost = ({userId,image,name,username}:{userId:string,image:string,name:s
     let pathname= usePathname()
  let router= useRouter()
  let {organization}= useOrganization();
-
+let  p =useSearchParams();
+let content=p.get('p')
 
     let form = useForm< z.infer<typeof PostValidation> >({
         resolver:zodResolver(PostValidation),
         defaultValues:{
-            post:'',
+            post:content?content:'',
             accountId:userId
         }
     });
@@ -49,7 +50,7 @@ const NewPost = ({userId,image,name,username}:{userId:string,image:string,name:s
                 </div>
               </FormLabel>
               <FormControl>
-                <Textarea placeholder="What are you thinking?" {...field} className=' account-form_input ' rows={8} />
+                <Textarea  placeholder="What are you thinking?" {...field} className=' account-form_input ' rows={8} />
               </FormControl>
               <FormMessage />
             </FormItem>

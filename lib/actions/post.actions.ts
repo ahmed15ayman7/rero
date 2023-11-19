@@ -118,19 +118,19 @@ export async function fetchPosts(pageNum = 1, pageSize = 20) {
               from: "posts",
               localField: "children",
               foreignField: "_id",
-              as: "children",
+              as: "childrenINF",
             },
         },
-        {$unwind:{path:'$children',preserveNullAndEmptyArrays: true}},
+        {$unwind:{path:'$childrenINF',preserveNullAndEmptyArrays: true}},
         {
             $lookup: {
                 from: "users",
-                localField: "children.author",
+                localField: "childrenINF.author",
                 foreignField: "_id",
-                as: "children.author",
+                as: "childrenINF.authorINF",
             },
         },
-        {$unwind:{path:'$children.author',preserveNullAndEmptyArrays: true}},
+        {$unwind:{path:'$childrenINF.authorINF',preserveNullAndEmptyArrays: true}},
         {
             $lookup: {
                 from: "communities",
@@ -151,19 +151,22 @@ export async function fetchPosts(pageNum = 1, pageSize = 20) {
             username: 1,
             image: 1,
           },
+          createdAt:1,
           community: { _id: '$community._id', id: '$community.id', name: '$community.name', username: '$community.username', image: '$community.image' },
           parentId: 1,
-          children: {
-            author: {
-              _id: '$children.author._id',
-              id: '$children.author.id',
-              name: '$children.author.name',
-              username: '$children.author.username',
-              image: '$children.author.image',
-              parentId: '$children.author.parentId',
-            },
-          },
-          members: { _id: 1, id: 1, image: 1 },
+          children: 
+            
+              {
+                text:'$childrenINF.text',
+                author: {
+                  _id: '$childrenINF.authorINF._id',
+                  id: '$childrenINF.authorINF.id',
+                  name: '$childrenINF.authorINF.name',
+                  username: '$childrenINF.authorINF.username',
+                  image: '$childrenINF.authorINF.image',
+                  parentId: '$childrenINF.authorINF.parentId',
+                },
+              },
         },
       },
     ])
@@ -174,7 +177,7 @@ export async function fetchPosts(pageNum = 1, pageSize = 20) {
       parentId: { $in: [null, undefined] },
     });
     const posts = await postQ.exec();
-
+console.log(posts.length)
     console.log("success posts count: " + posts.length);
     let isNext = +totalPosts > skipAmount + posts.length;
     return { posts, isNext };
