@@ -23,15 +23,16 @@ export let SugCard=({result,type,userInfo}:{result:any[]|undefined,type:string,u
             let isSubscribed :boolean=false,isFriend :boolean=false;
             if (type==='users') {
               isFriend=userInfo?.friends.filter(e=>e.id===result?.id).length ===1;
-            }else{
-              isSubscribed=userInfo?.communities.filter(e=>e===result?._id).length === 1;
+            }else if(type==="communities"){
+                if(userInfo?.communities!==undefined)
+              isSubscribed=(userInfo?.communities.filter((e:string) => e.toString() ===result?._id).length) >= 1;
             }
             let checked=type==='users'?isFriend:isSubscribed;
             let route=type==='users'?`/profile/${result?.id}`:`/communities/${result?.id}`
             return (
               <article className='user-card'>
                 <div className="user-card_avatar">
-                <Image src={result?.image} alt={result?.name} height={48} width={48} className=' rounded-full object-contain' onClick={()=>navigate.push(route)}/>
+                <Image src={result?.image} alt={result?.name} height={48} width={48} className=' cursor-pointer rounded-full object-contain' onClick={()=>navigate.push(route)}/>
             <div className=" flex-1 text-ellipsis">
                 <h3 className=' text-base-semibold text-light-1'>{result?.name}</h3>
                 <p className=" text-small-semibold text-gray-1">@{result?.username}</p>
@@ -39,17 +40,9 @@ export let SugCard=({result,type,userInfo}:{result:any[]|undefined,type:string,u
             <button
               className="flex no-underline gap-4 cursor-pointer"
               onClick={()=>handleAddMember(type,result?._id,userInfo?._id,checked)}>
-            
-                {checked?
+                {
               <Image
-              src="/assets/user-true.svg"
-              alt="add friend"
-              className=""
-              width={24}
-              height={24}
-              />:
-              <Image
-              src="/assets/user-plus.svg"
+              src={checked?"/assets/user-true.svg":"/assets/user-plus.svg"}
               alt="add friend"
               className=""
               width={24}

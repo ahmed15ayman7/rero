@@ -177,13 +177,13 @@ export async function addMemberToCommunity(
   try {
     connectDB();
     // Find the community by its unique id
-    const community = await Community.findOne({ id: communityId });
+    const community = await Community.findById(communityId );
 
     if (!community) {
       console.log("Community not found");
     }
     // Find the user by their unique id
-    const user = await User.findOne({ id: memberId });
+    const user = await User.findById(memberId );
 
     if (!user) {
       console.log("User not found");

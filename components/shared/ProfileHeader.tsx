@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { addMemberToCommunity } from "@/lib/actions/community.actions";
 import { addFriend } from "@/lib/actions/user.actions";
 import { SignedIn, SignOutButton } from "@clerk/nextjs";
@@ -14,12 +14,12 @@ interface props {
   bio: string;
   userId?: string;
   friends?: {
-    _id:string,
-    id:string,
-    name:string,
-    username:string,
-    image:string,
-}[];
+    _id: string;
+    id: string;
+    name: string;
+    username: string;
+    image: string;
+  }[];
   myId?: string;
   type?: "User" | "Community";
 }
@@ -37,7 +37,10 @@ const ProfileHeader = ({
 }: props) => {
   let router = useRouter();
   let pathname = usePathname();
-  let isFriend = friends?.filter(friend => friend.id===userId || friend.id===userAuthId).length === 1;
+  let isFriend =
+    friends?.filter(
+      (friend) => friend.id === userId || friend.id === userAuthId
+    ).length === 1;
   let handleAddFriend = async () => {
     await addFriend({
       finalF: "activity",
@@ -45,13 +48,11 @@ const ProfileHeader = ({
       friendId: accountId,
       userId: myId,
       path: pathname,
-      isFriend:isFriend
+      isFriend: isFriend,
     });
-    
   };
   let handleAddMember = async () => {
-    
-    await addMemberToCommunity(accountId,userAuthId,pathname,isFriend);
+    await addMemberToCommunity(accountId, userAuthId, pathname, isFriend);
   };
   return (
     <div className="flex w-full  justify-between">
@@ -75,101 +76,99 @@ const ProfileHeader = ({
         <div className="mt-12"></div>
       </div>
       <div className="flex flex-col w-1/2 justify-between items-end gap-8">
-      {type==='User' && userId === userAuthId ? (
-        <div className="">
-          <Link href={"/profile/edit/"} className="flex gap-4 cursor-pointer">
-            <span className=" text-white  max-lg:hidden">edit</span>
-            <Image
-              src="/assets/edit.svg"
-              alt="edit"
-              className=""
-              width={24}
-              height={24}
-            />
-          </Link>
-        </div>):(<div></div>)}
-        {type==='User' && userId !== userAuthId ? (
+        {type === "User" && userId === userAuthId ? (
+          <div className="">
+            <Link href={"/profile/edit/"} className="flex gap-4 cursor-pointer">
+              <span className=" text-white  max-lg:hidden">edit</span>
+              <Image
+                src="/assets/edit.svg"
+                alt="edit"
+                className=""
+                width={24}
+                height={24}
+              />
+            </Link>
+          </div>
+        ) : (
+          <div></div>
+        )}
+        {userId !== userAuthId ? (
           <div className="">
             <button
               className="flex no-underline gap-4 cursor-pointer"
-              onClick={handleAddFriend}>
-            <span className=" text-white  max-lg:hidden">{isFriend?'friend':'add to friends'}</span>
-                {isFriend?
+              onClick={
+                type === "Community" ? handleAddMember : handleAddFriend
+              }>
+              <span
+                className={` text-white ${
+                  isFriend ? "text-primary-500" : ""
+                } max-lg:hidden`}>
+                {type === "Community"
+                  ? isFriend
+                    ? "Subscribed"
+                    : "Subscribe"
+                  : isFriend
+                  ? "friend"
+                  : "add to friends"}
+              </span>
               <Image
-              src="/assets/user-true.svg"
-              alt="add friend"
-              className=""
-              width={24}
-              height={24}
-              />:
-              <Image
-              src="/assets/user-plus.svg"
-              alt="add friend"
-              className=""
-              width={24}
-              height={24}
+                src={
+                  isFriend ? "/assets/user-true.svg" : "/assets/user-plus.svg"
+                }
+                alt="add friend"
+                className=""
+                width={24}
+                height={24}
               />
-            }
             </button>
           </div>
-        ) : (<div></div>)}
-        
-        {type==='Community' ? (
-          <div className="">
-            <button
-              className="flex no-underline gap-4 cursor-pointer"
-              onClick={handleAddMember}>
-            <span className={` text-white ${isFriend?'text-primary-500':''} max-lg:hidden`}>{isFriend?'Subscribed':'Subscribe'}</span>
-                {isFriend?
-              <Image
-              src="/assets/user-true.svg"
-              alt="add friend"
-              className=""
-              width={24}
-              height={24}
-              />:
-              <Image
-              src="/assets/user-plus.svg"
-              alt="add friend"
-              className=""
-              width={24}
-              height={24}
-              />
-            }
-            </button>
+        ) : (
+          <div></div>
+        )}
+        {type === "User" && userId === userAuthId ? (
+          <div className="max-sm:flex hidden ">
+            <SignedIn>
+              <SignOutButton signOutCallback={() => router.push("/sign-in")}>
+                <div className="flex gap-4 cursor-pointer">
+                  <Image
+                    src="/assets/logout.svg"
+                    alt="logout"
+                    width={24}
+                    height={24}
+                  />
+                </div>
+              </SignOutButton>
+            </SignedIn>
           </div>
         ) : null}
-        {type==='User' && userId === userAuthId ? (
-        <div className="max-sm:flex hidden ">
-          <SignedIn>
-            <SignOutButton signOutCallback={() => router.push("/sign-in")}>
-              <div className="flex gap-4 cursor-pointer">
-                <Image
-                  src="/assets/logout.svg"
-                  alt="logout"
-                  width={24}
-                  height={24}
-                />
-              </div>
-            </SignOutButton>
-          </SignedIn>
-        </div>): null}
         <div className="ml-2 mt-3 flex content-end  items-center gap-2 overflow-hidden">
-        {friends !==undefined &&<p className="rounded-full text-white justify-center items-center  bg-primary-500 flex" style={{width:'30px',height:'30px',zIndex:'400',border:'1px solid #ffffff',opacity:'.6'}}>+{friends?.length}</p>}
-          {friends !==undefined && friends.map((friend, index) => {
-            return (
-              <Image
-                key={index}
-                src={friend.image}
-                alt={`user_${index}`}
-                width={30}
-                height={30}
-                style={{zIndex:`${399-index}`}}
-                className={`-ml-4 rounded-full object-cover`}
-              />
-            );
-          })}
-      </div>
+          {friends !== undefined && (
+              <p
+                className="rounded-full text-white justify-center items-center  bg-primary-500 flex"
+                style={{
+                  width: "30px",
+                  height: "30px",
+                  zIndex: "400",
+                  border: "1px solid #ffffff",
+                  opacity: ".6",
+                }}>
+                +{friends?.length}
+              </p>
+            ) &&
+            friends.map((friend, index) => {
+              return (
+                <Image
+                  key={index}
+                  src={friend.image}
+                  alt={`user_${index}`}
+                  width={30}
+                  height={30}
+                  style={{ zIndex: `${399 - index}` }}
+                  className={`-ml-4 rounded-full object-cover`}
+                />
+              );
+            })}
+        </div>
       </div>
     </div>
   );
