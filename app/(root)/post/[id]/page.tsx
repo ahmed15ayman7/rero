@@ -1,7 +1,7 @@
 
 import CardPost from "@/components/cards/CardPost";
 import Comment from "@/components/forms/Comment";
-import { fetchPostById } from "@/lib/actions/post.actions";
+import { fetchPostById, PostData } from "@/lib/actions/post.actions";
 import { fetchUser } from "@/lib/actions/user.actions";
 import { currentUser } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
@@ -12,25 +12,25 @@ const Page = async({params}:{params:{id:string}}) => {
   if (!user) return redirect('/sign-in');
   let userInfo = await fetchUser(user.id);
   if (!userInfo?.onboarding) redirect("/onboarding");
-  let post = await fetchPostById(params.id);
+  let post : PostData | null | undefined = await fetchPostById(params.id);
   return (
     <section className=" relative">
-      <div className="">
-      <CardPost  id={post?._id} parentId={post?.parentId} currentId={user?.id} author={post?.author} content={post?.text}
-      createdAt={post?.createdAt} community={post?.community}  comments={post?.children} />
-      </div>
+     {post && (<div className="">
+      <CardPost react={post.react} id={post._id} parentId={post.parentId} userId={userInfo?._id} currentId={user.id} author={post.author} content={post.text}
+      createdAt={post.createdAt} community={post.community}  comments={post.children} />
+      </div>)&&
       <div className="mt-5">
         <Comment
-        postId={post?._id}
+        postId={post._id}
         currentUserId={userInfo?._id}
         currentUserImg={user?.imageUrl}
         />
-      </div>
+        </div>&&
       <div className="mt-7">
         {post?.children.map((child:any) =>
-        <CardPost  id={child?._id} parentId={child?.parentId} currentId={child?.id} author={child?.author} content={child?.text}
+        <CardPost react={post?.react} id={child?._id} parentId={child?.parentId} userId={userInfo?._id} currentId={child?.id} author={child?.author} content={child?.text}
         createdAt={child?.createdAt} community={child?.community}  comments={child?.children} isComment={true} />)}
-      </div>
+        </div>}
     </section>
   )
 }

@@ -18,7 +18,9 @@ export default async function Home() {
             key={post?._id}
             id={post?._id}
             parentId={post?.parentId}
+            react={post.react}
             currentId={user?.id}
+            userId={userInfo?._id}
             author={post?.author}
             content={post?.text}
             createdAt={post?.createdAt}

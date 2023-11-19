@@ -11,6 +11,35 @@ interface props {
   communityId: string | null;
   path: string;
 }
+export interface PostData{
+
+  _id: string;
+  parentId: string | null;
+  currentId: String | undefined;
+  author: {
+    _id: string;
+    id: string;
+    name: string;
+    image: string;
+  };
+  react:string[];
+  text: string;
+  community: {
+    id: string;
+    name: string;
+    image: string;
+  } | null;
+  createdAt: string;
+  children: {
+    author: {
+      _id: string;
+      id: string;
+      image: string;
+      name: string;
+    };
+  }[];
+  
+}
 export async function createPost({ text, author, communityId, path }: props) {
   connectDB();
   try {
@@ -67,10 +96,37 @@ export async function createCommentToPost({
     console.log(`failed to create posts: ${error.message}`);
   }
 }
+export async function reactToPost({
+  postId,
+  react,
+  userId,
+  path
+}: {
+  postId:string;
+  userId:string|undefined;
+  react: boolean|undefined;
+  path:string
+}) {
+  connectDB();
+  try {
+    const post = await Post.findById(postId);
+    if (!post) {
+      console.log("Post not found");
+    }
+    if (userId&&post.react) {  
+      react?  post.react.pop(userId):
+      post.react.push(userId);
+      await post.save()
+      revalidatePath(path);
+    }
+  } catch (error: any) {
+    console.log(`failed to create posts: ${error.message}`);
+  }
+}
 export async function fetchPostById(id: string) {
   connectDB();
   try {
-    const post = await Post.findById(id)
+    const post : PostData | null | undefined = await Post.findById(id)
       .populate({ path: "author", model: User, select: "_id id name image" })
       .populate({
         path: "children",
@@ -90,8 +146,11 @@ export async function fetchPostById(id: string) {
             },
           },
         ],
-      })
-      .exec();
+      }).lean()
+      if(!post){
+        console.log("post not found");
+    }
+      
     return post;
   } catch (error) {
     console.log(error);
@@ -140,35 +199,29 @@ export async function fetchPosts(pageNum = 1, pageSize = 20) {
             },
         },
         {$unwind:{path:'$community',preserveNullAndEmptyArrays: true}},
-      {
-        $project: {
-          _id: 1,
-          text: 1,
-          author: {
-            _id: 1,
-            id: 1,
-            name: 1,
-            username: 1,
-            image: 1,
-          },
-          createdAt:1,
-          community: { _id: '$community._id', id: '$community.id', name: '$community.name', username: '$community.username', image: '$community.image' },
-          parentId: 1,
-          children: 
-            
-              {
-                text:'$childrenINF.text',
+        {
+          $group: {
+            _id: '$_id',
+            text: { $first: '$text' },
+            author: { $first: '$author' },
+            react:{$first:'$react'},
+            createdAt:{$first:'$createdAt'},
+            community: { $first: '$community' },
+          parentId: {$first:'$parentId'},
+            children: {
+              $push: {
                 author: {
                   _id: '$childrenINF.authorINF._id',
-                  id: '$childrenINF.authorINF.id',
-                  name: '$childrenINF.authorINF.name',
-                  username: '$childrenINF.authorINF.username',
-                  image: '$childrenINF.authorINF.image',
-                  parentId: '$childrenINF.authorINF.parentId',
+                   id: '$childrenINF.authorINF.id',
+                   name: '$childrenINF.authorINF.name',
+                   username: '$childrenINF.authorINF.username',
+                   image: '$childrenINF.authorINF.image',
+                   parentId: '$childrenINF.authorINF.parentId',
                 },
               },
+            },
+          },
         },
-      },
     ])
       .sort({ createdAt: "desc" })
       .skip(skipAmount)
@@ -177,7 +230,7 @@ export async function fetchPosts(pageNum = 1, pageSize = 20) {
       parentId: { $in: [null, undefined] },
     });
     const posts = await postQ.exec();
-console.log(posts.length)
+console.log(posts)
     console.log("success posts count: " + posts.length);
     let isNext = +totalPosts > skipAmount + posts.length;
     return { posts, isNext };
