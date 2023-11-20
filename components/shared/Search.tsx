@@ -85,7 +85,7 @@ const Search = ({
         />
       </div>
       
-    <div className={` mt-14 flex flex-1   ${typeS==='community'?' justify-evenly max-sm:flex-col gap-7':'flex-col gap-9' }`}>
+    <div className={` mt-14 flex flex-1   ${typeS==='community'?' flex-wrap justify-evenly max-sm:flex-col gap-7':'flex-col gap-9' }`}>
       {typeS==='user' ?(resultU?.users.length === 0 ? (
         <h1>no result</h1>
         ) : (
