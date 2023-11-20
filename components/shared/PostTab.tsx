@@ -1,4 +1,5 @@
 import { fetchCommunityPosts } from "@/lib/actions/community.actions";
+import { PostData } from "@/lib/actions/post.actions";
 import { fetchUserPosts } from "@/lib/actions/user.actions";
 import { redirect } from "next/navigation";
 import React from "react";
@@ -7,37 +8,15 @@ interface props {
   currentUserId: string | undefined;
   accountId: string|undefined;
   accountType: string;
+  userId:string|undefined
 }
-interface Posts {
-  _id: string;
-  text: string;
-  parentId: string;
-  author: {
-    _id: string;
-    name: string;
-    image: string;
-    id: string;
-  };
-  community: {
-    id: string;
-    name: string;
-    image: string;
-  };
-  createdAt: string;
-  children: {
-    author: {
-      _id: string;
-      id: string;
-      image: string;
-    };
-  }[];
-}
+
 interface Result {
   _id: string;
   name: string;
   image: string;
   id: string;
-  posts: Posts[];
+  posts: PostData[];
 }
 let resDefault = {
   _id: "",
@@ -49,12 +28,14 @@ let resDefault = {
       _id: "",
       text: "",
       parentId: "",
+      currentId:'',
       author: {
         _id: "",
         name: "",
         image: "",
         id: "",
       },
+      react:[],
       community: {
         id: "",
         name: "",
@@ -67,14 +48,15 @@ let resDefault = {
             _id: "",
             id: "",
             image: "",
+            name: ''
           },
         },
       ],
     },
   ],
 };
-async function PostTab({ currentUserId, accountId, accountType }: props) {
-  let result: Result = resDefault;
+async function PostTab({ userId,currentUserId, accountId, accountType }: props) {
+  let result: Result | null |undefined = resDefault;
   if (accountId) {
     
     switch (accountType) {
@@ -93,14 +75,15 @@ async function PostTab({ currentUserId, accountId, accountType }: props) {
   if (!result) redirect("/");
   return (
     <div className="flex flex-col gap-10 ">
-      {result.posts.map((post: Posts) => (
-        <CardPost
+      
+       {  result.posts.map((post: PostData) => (
+       <CardPost
           key={post._id}
           id={post._id}
           parentId={post.parentId}
           currentId={currentUserId}
           author={
-            accountType === "User"
+            accountType === "User" && result
               ? {
                   _id: result._id,
                   id: result.id,
@@ -109,16 +92,18 @@ async function PostTab({ currentUserId, accountId, accountType }: props) {
                 }
               : post.author
           }
+          userId={userId}
+          react={post.react}
           comments={post.children}
           community={
-            accountType === "Community"
+            accountType === "Community" && result
               ? { name: result.name, id: result.id, image: result.image }
               : post.community
           }
           content={post.text}
           createdAt={post.createdAt}
         />
-      ))}
+      ))} 
     </div>
   );
 }

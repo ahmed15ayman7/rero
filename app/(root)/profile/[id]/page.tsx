@@ -43,11 +43,11 @@ const Page = async ({params}:{params:{id:string}}) => {
                   className="object-contain"
                 />
                 <p className=" max-sm:hidden">{tab.label}</p>
-                {tab.label === "Posts" && (
+             
                   <p className=" bg-gray-700 rounded-full px-2 text-base-regular">
-                    {userInfo?.posts?.length}
+                    {tab.label === "Posts" ? (userInfo?.posts?.length):tab.label === "Replies"?(friends?.length):null}
                   </p>
-                )}
+
               </TabsTrigger>
             ))}
           </TabsList>
@@ -69,8 +69,9 @@ const Page = async ({params}:{params:{id:string}}) => {
                         )}
                 </section>
                 :
-                 /* @ts-ignore */
+                 /* @ts-ignore */ 
               <PostTab
+              userId={userInfo._id}
                 currentUserId={user?.id}
                 accountId={userInfo?.id}
                 accountType="User"
@@ -78,7 +79,7 @@ const Page = async ({params}:{params:{id:string}}) => {
             </TabsContent>
           ))}
         </Tabs>
-      </div>
+      </div> 
     </section>
   );
 };

@@ -126,7 +126,7 @@ export async function reactToPost({
 export async function fetchPostById(id: string) {
   connectDB();
   try {
-    const post : PostData | null | undefined = await Post.findById(id)
+    const post : PostData | null  = await Post.findById(id)
       .populate({ path: "author", model: User, select: "_id id name image" })
       .populate({
         path: "children",

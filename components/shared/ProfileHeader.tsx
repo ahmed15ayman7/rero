@@ -54,6 +54,8 @@ const ProfileHeader = ({
   let handleAddMember = async () => {
     await addMemberToCommunity(accountId, userAuthId, pathname, isFriend);
   };
+  let regLink=/https?:\/\/((www.)?\w+\d*.?\w*\/?)+/ig;
+  let islink=bio.match(regLink)
   return (
     <div className="flex w-full  justify-between">
       <div className="flex flex-col justify-start">
@@ -72,13 +74,13 @@ const ProfileHeader = ({
             </div>
           </div>
         </div>
-        <p className="mt-6 max-w-lg text-base-regular text-gray-1">{bio}</p>
+        <p className="mt-6 max-w-lg text-subtle-medium text-gray-1">{bio.split(' ').map(e=>islink?.includes(e)?<a className=" underline text-primary-500 visited:text-purple-500  block hover:text-purple-400" href={e} target='_blank' rel="noreferrer" >{e.length>10?`${e.slice(0,19)}...`:e}   </a>:' '+e+' ')}</p>
         <div className="mt-12"></div>
       </div>
       <div className="flex flex-col w-1/2 justify-between items-end gap-8">
-        {type === "User" && userId === userAuthId ? (
+        { userId === userAuthId || myId? (
           <div className="">
-            <Link href={"/profile/edit/"} className="flex gap-4 cursor-pointer">
+            <Link href={`/profile/edit/${type === "Community" ?(myId?myId:userId):userId}`} className="flex gap-4 cursor-pointer">
               <span className=" text-white  max-lg:hidden">edit</span>
               <Image
                 src="/assets/edit.svg"
@@ -92,7 +94,7 @@ const ProfileHeader = ({
         ) : (
           <div></div>
         )}
-        {userId !== userAuthId ? (
+        {userId !== userAuthId  ? (
           <div className="">
             <button
               className="flex no-underline gap-4 cursor-pointer"
@@ -141,10 +143,9 @@ const ProfileHeader = ({
             </SignedIn>
           </div>
         ) : null}
-        <div className="ml-2 mt-3 flex content-end  items-center gap-2 overflow-hidden">
-          {friends !== undefined && (
+        <div className="ml-2 mt-3 flex content-end   items-center gap-2">
               <p
-                className="rounded-full text-white justify-center items-center  bg-primary-500 flex"
+                className="rounded-full text-white justify-center cursor-pointer items-center  bg-primary-500 flex"
                 style={{
                   width: "30px",
                   height: "30px",
@@ -152,9 +153,10 @@ const ProfileHeader = ({
                   border: "1px solid #ffffff",
                   opacity: ".6",
                 }}>
+                  
                 +{friends?.length}
               </p>
-            ) &&
+          {friends && 
             friends.map((friend, index) => {
               return (
                 <Image
@@ -164,7 +166,7 @@ const ProfileHeader = ({
                   width={30}
                   height={30}
                   style={{ zIndex: `${399 - index}` }}
-                  className={`-ml-4 rounded-full object-cover`}
+                  className={`-ml-4 cursor-pointer rounded-full object-cover`}
                 />
               );
             })}

@@ -14,6 +14,7 @@ import { isBase64Image } from '@/lib/utils'
 import { useUploadThing } from '@/uploadthing'
 import { updateUser } from '@/lib/actions/user.actions'
 import { usePathname, useRouter } from 'next/navigation'
+import { updateCommunityInfo } from '@/lib/actions/community.actions'
 interface props{
     userData:{
         id:string|undefined,
@@ -22,10 +23,11 @@ interface props{
         name:string,
         bio:string,
         image:string|undefined,
+        type:string;
     },
-    btnTitle:string
+
 }
-const AccountProfile = ({userData,btnTitle}:props) => {
+const AccountProfile = ({userData}:props) => {
  let pathname= usePathname()
  let router= useRouter()
     let {startUpload}=useUploadThing("media")
@@ -67,6 +69,7 @@ const AccountProfile = ({userData,btnTitle}:props) => {
                 values.profile_photo=imageRes[0].fileUrl;
             }
         }
+        userData.type==='user'?
         await updateUser({
           userId: userData.id,
           username: values.username,
@@ -74,14 +77,20 @@ const AccountProfile = ({userData,btnTitle}:props) => {
           bio: values.bio,
           image: values.profile_photo,
           path:pathname
-        })
-        if (pathname==='/profile/edit') {
+        }):
+        await updateCommunityInfo({communityId: userData.objectID ,
+          username: values.username,
+          name: values.name,
+          bio: values.bio,
+          image: values.profile_photo,
+          path:pathname})
+        if (pathname.includes('/profile/edit')) {
           router.back();
         }else{
           router.push('/');
         }
-      } catch (error) {
-          
+      } catch (error:any) {
+          console.log('faild to update user:',error)
         }
     }
   return (

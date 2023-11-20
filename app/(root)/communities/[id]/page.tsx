@@ -7,6 +7,7 @@ import {
   CommunityData,
   fetchCommunityDetails,
 } from "@/lib/actions/community.actions";
+import { fetchUser } from "@/lib/actions/user.actions";
 import { currentUser } from "@clerk/nextjs";
 import Image from "next/image";
 import { redirect } from "next/navigation";
@@ -19,11 +20,15 @@ interface Member {
 }
 const page = async ({ params }: { params: { id: string } }) => {
   let user = await currentUser();
+  let userInfo = await fetchUser(user?.id);
+
   if (!user) return redirect("/sign-in");
   let communityDetails: CommunityData | null | undefined =
     await fetchCommunityDetails(params.id);
   if (!communityDetails) return null;
   let members: Member[] = communityDetails?.members;
+  let myId=userInfo?.communities.filter(e=>JSON.stringify(e)===JSON.stringify(communityDetails?._id))[0]
+  let admin=JSON.stringify(userInfo?._id)===JSON.stringify(communityDetails.createdBy)
   return (
     <section className="text-white">
       <ProfileHeader
@@ -33,10 +38,10 @@ const page = async ({ params }: { params: { id: string } }) => {
         username={communityDetails.username}
         image={communityDetails.image}
         bio={communityDetails.bio}
+        myId={myId&&admin?communityDetails.id:undefined}
         friends={members}
         type="Community"
       />
-
       <div className="mt-8">
         <Tabs defaultValue="posts" className="w-full">
           <TabsList className="tab">
@@ -50,11 +55,11 @@ const page = async ({ params }: { params: { id: string } }) => {
                   className="object-contain"
                 />
                 <p className=" max-sm:hidden">{tab.label}</p>
-                {tab.label === "Posts" && (
+           
                   <p className=" bg-gray-700 rounded-full px-2 text-base-regular">
-                    {communityDetails?.posts?.length}
+                    {tab.label === "Posts" ? (communityDetails?.posts?.length):tab.value === "members"?(members?.length):null}
                   </p>
-                )}
+                
               </TabsTrigger>
             ))}
           </TabsList>
@@ -79,6 +84,7 @@ const page = async ({ params }: { params: { id: string } }) => {
               ) : (
                 /* @ts-ignore */
                 <PostTab
+                  userId={userInfo?._id}
                   currentUserId={user?.id}
                   accountId={communityDetails?._id}
                   accountType="Community"

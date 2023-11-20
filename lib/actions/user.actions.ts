@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import Community from "../models/community.model";
 import Post from "../models/post.models";
 import User from "../models/user.models";
+import { PostData } from "./post.actions";
 interface props{
     userId: string | undefined,
     username: string,
@@ -33,6 +34,13 @@ export interface UserData{
         image:string,
     }[]
 }
+export interface Result {
+    _id: string;
+    name: string;
+    image: string;
+    id: string;
+    posts: PostData[];
+  }
 export async function updateUser (
     { userId, username, name, bio, image, path}:props
 ) : Promise<void> {
@@ -44,7 +52,7 @@ export async function updateUser (
         {upsert: true}
     )
     console.log("Successfully updated user")
-    if (path==='/profile/edit') {
+    if (path.includes('/profile/edit')) {
         revalidatePath(path);
     }
    } catch (error:any) {
@@ -99,7 +107,7 @@ export async function fetchAllUser ({searchString='',pageNum=1, pageSize=20,sort
 export async function fetchUserPosts (userId:string) {
     connectDB();
     try {
-        let posts = await User.findOne({id:userId}).populate({
+        let posts: Result | null  = await User.findOne({id:userId}).populate({
             path:'posts',
             model:Post,
             populate:[ {
@@ -117,7 +125,7 @@ export async function fetchUserPosts (userId:string) {
                 select:'id name image'
             }
         ]
-        });
+        }).lean()
         return posts;
     } catch (error:any) {
         console.log(`not found user: ${error.message}`);

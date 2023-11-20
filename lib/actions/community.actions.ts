@@ -5,6 +5,7 @@ import Post from "../models/post.models";
 import User from "../models/user.models";
 import { connectDB } from "@/mongoose";
 import { revalidatePath } from "next/cache";
+import { Result } from "./user.actions";
 export interface CommunityData {
   _id: string;
   id: string;
@@ -12,6 +13,7 @@ export interface CommunityData {
   name: string;
   bio: string;
   image: string;
+  createdBy: string;
   posts: string[];
   members: {
     _id: string;
@@ -67,7 +69,6 @@ export async function fetchCommunityDetails(id: string) {
       id: id,
     })
       .populate([
-        "createdBy",
         {
           path: "members",
           model: User,
@@ -75,7 +76,7 @@ export async function fetchCommunityDetails(id: string) {
         },
       ])
       .lean();
-
+    if (!communityDetails) console.log("community details not found");
     return communityDetails;
   } catch (error: any) {
     console.log("Error fetching community details:", error);
@@ -85,26 +86,30 @@ export async function fetchCommunityDetails(id: string) {
 export async function fetchCommunityPosts(id: string) {
   connectDB();
   try {
-    const communityPosts = await Community.findById(id).populate({
-      path: "posts",
-      model: Post,
-      populate: [
-        {
-          path: "author",
-          model: User,
-          select: "name image id", // Select the "name" and "_id" fields from the "User" model
-        },
-        {
-          path: "children",
-          model: Post,
-          populate: {
+    const communityPosts: Result | null | undefined = await Community.findById(
+      id
+    )
+      .populate({
+        path: "posts",
+        model: Post,
+        populate: [
+          {
             path: "author",
             model: User,
-            select: "image _id", // Select the "name" and "_id" fields from the "User" model
+            select: "name image id", // Select the "name" and "_id" fields from the "User" model
           },
-        },
-      ],
-    });
+          {
+            path: "children",
+            model: Post,
+            populate: {
+              path: "author",
+              model: User,
+              select: "image _id", // Select the "name" and "_id" fields from the "User" model
+            },
+          },
+        ],
+      })
+      .lean();
 
     return communityPosts;
   } catch (error: any) {
@@ -134,24 +139,25 @@ export async function fetchCommunities({
         { name: { $regex: regex } },
       ];
     }
-    const communitiesQ = Community.aggregate([{$match:query},
-      {$sample:{size:pageSize}},
-      { 
+    const communitiesQ = Community.aggregate([
+      { $match: query },
+      { $sample: { size: pageSize } },
+      {
         $lookup: {
-        from: 'users', 
-        localField: 'members',
-        foreignField: '_id',
-        as: 'members',
-      }
-    },
+          from: "users",
+          localField: "members",
+          foreignField: "_id",
+          as: "members",
+        },
+      },
       {
         $project: {
           _id: 1,
           id: 1,
           name: 1,
           username: 1,
-          image:1,
-          members: { _id: 1,id:1,image:1 },
+          image: 1,
+          members: { _id: 1, id: 1, image: 1 },
         },
       },
     ])
@@ -177,13 +183,13 @@ export async function addMemberToCommunity(
   try {
     connectDB();
     // Find the community by its unique id
-    const community = await Community.findById(communityId );
+    const community = await Community.findById(communityId);
 
     if (!community) {
       console.log("Community not found");
     }
     // Find the user by their unique id
-    const user = await User.findById(memberId );
+    const user = await User.findById(memberId);
 
     if (!user) {
       console.log("User not found");
@@ -195,12 +201,12 @@ export async function addMemberToCommunity(
     }
 
     // Add the user's _id to the members array in the community
-    isFriend?
-    user.communities.pop(community._id):
-    user.communities.push(community._id);
-    isFriend?
-    community.members.pop(user._id):
-    community.members.push(user._id);
+    isFriend
+      ? user.communities.pop(community._id)
+      : user.communities.push(community._id);
+    isFriend
+      ? community.members.pop(user._id)
+      : community.members.push(user._id);
     await community.save();
     await user.save();
     revalidatePath(path);
@@ -248,21 +254,34 @@ export async function removeUserFromCommunity(
   }
 }
 
-export async function updateCommunityInfo(
-  communityId: string,
-  name: string,
-  username: string,
-  image: string
-) {
+export async function updateCommunityInfo({
+  communityId,
+  username,
+  name,
+  bio,
+  image,
+  path,
+}: {
+  communityId: string | undefined;
+  username: string;
+  name: string;
+  bio: string;
+  image: string;
+  path: string;
+}) {
   try {
     connectDB();
 
     // Find the community by its _id and update the information
-    const updatedCommunity = await Community.findOneAndUpdate(
-      { id: communityId },
-      { name, username, image }
-    );
-
+    const updatedCommunity = await Community.findByIdAndUpdate(communityId, {
+      name: name,
+      username: username,
+      image: image,
+      bio: bio,
+    });
+    if (path.includes("/profile/edit")) {
+      revalidatePath(path);
+    }
     if (!updatedCommunity) {
       console.log("Community not found");
     }

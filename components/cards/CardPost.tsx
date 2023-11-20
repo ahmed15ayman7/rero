@@ -52,7 +52,6 @@ const CardPost = ({
   let isReplay = commentsFilter.filter(e=>e.author.id===currentId).length>=1;
   let commLen=isReplay?commentsFilter.length-1:commentsFilter.length;
   let isReact=react && react.filter(e=>e===userId).length>=1;
-  console.log(react)
   let handleHeart=async()=>{
     await reactToPost({postId:id,react:isReact,userId:userId,path:pathname})
   }
@@ -102,7 +101,7 @@ const CardPost = ({
                 </Link>
                 <Link href={`/new-post?p=${content}`}>
                 <Image
-                  src="/assets/share.svg"
+                  src="/assets/repost.svg"
                   alt="repost"
                   height={20}
                   width={20}
@@ -110,7 +109,7 @@ const CardPost = ({
                   />
                   </Link>
                 <Image
-                  src="/assets/repost.svg"
+                  src="/assets/share.svg"
                   alt="share"
                   height={20}
                   width={20}
