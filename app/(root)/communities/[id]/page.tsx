@@ -32,8 +32,9 @@ const page = async ({ params }: { params: { id: string } }) => {
   return (
     <section className="text-white">
       <ProfileHeader
-        accountId={params.id}
+        accountId={communityDetails?._id}
         userAuthId={user.id}
+        userId={userInfo?._id}
         name={communityDetails.name}
         username={communityDetails.username}
         image={communityDetails.image}

@@ -10,10 +10,12 @@ interface usData {
   name: string;
   bio: string;
   image: string|undefined;
+  type: string
 }
 const Onboarding = async () => {
   let user = await currentUser();
   const userInfo = await fetchUser(user?.id);
+  console.log(user);
   if (userInfo?.onboarding) redirect("/");
   let userData: usData = {
     id: user?.id,
@@ -22,6 +24,7 @@ const Onboarding = async () => {
     name: user?.firstName || userInfo?.name || "",
     bio: userInfo?.bio || "",
     image: user?.imageUrl || userInfo?.image,
+    type:'user'
   };
   return (
     <main className="  mx-auto py-12 flex flex-col max-w-3xl">
@@ -30,7 +33,7 @@ const Onboarding = async () => {
         This is where you will be able to create a new account.
       </p>
       <div className=" bg-dark-2  p-10 ">
-        <AccountProfile userData={userData} btnTitle="Continue" />
+        <AccountProfile userData={userData}/>
       </div>
     </main>
   );

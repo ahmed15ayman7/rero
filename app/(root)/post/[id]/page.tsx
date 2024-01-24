@@ -18,19 +18,20 @@ const Page = async({params}:{params:{id:string}}) => {
      {post && (<div className="">
       <CardPost react={post.react} id={post._id} parentId={post.parentId} userId={userInfo?._id} currentId={user.id} author={post.author} content={post.text}
       createdAt={post.createdAt} community={post.community}  comments={post.children} />
-      </div>)&&
+      </div>)}
+      {post &&
       <div className="mt-5">
         <Comment
         postId={post._id}
         currentUserId={userInfo?._id}
         currentUserImg={user?.imageUrl}
         />
-        </div>&&
+        </div>}
       <div className="mt-7">
         {post?.children.map((child:any) =>
         <CardPost react={post?.react} id={child?._id} parentId={child?.parentId} userId={userInfo?._id} currentId={child?.id} author={child?.author} content={child?.text}
         createdAt={child?.createdAt} community={child?.community}  comments={child?.children} isComment={true} />)}
-        </div>}
+        </div>
     </section>
   )
 }

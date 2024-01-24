@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript:{
+  typescript: {
     ignoreBuildErrors: true,
   },
   experimental: {
@@ -12,6 +12,10 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "img.clerk.com",
+      },
+      {
+        protocol: "https",
+        hostname: "utfs.io",
       },
       {
         protocol: "https",

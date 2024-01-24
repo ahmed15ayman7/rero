@@ -25,7 +25,7 @@ interface props{
         image:string|undefined,
         type:string;
     },
-
+  
 }
 const AccountProfile = ({userData}:props) => {
  let pathname= usePathname()
@@ -78,7 +78,7 @@ const AccountProfile = ({userData}:props) => {
           image: values.profile_photo,
           path:pathname
         }):
-        await updateCommunityInfo({communityId: userData.objectID ,
+        await updateCommunityInfo({communityId: userData.objectID,
           username: values.username,
           name: values.name,
           bio: values.bio,

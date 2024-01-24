@@ -51,7 +51,7 @@ const CardPost = ({
   let commentsFilter=comments.filter(e=>e.author._id!==undefined)
   let isReplay = commentsFilter.filter(e=>e.author.id===currentId).length>=1;
   let commLen=isReplay?commentsFilter.length-1:commentsFilter.length;
-  let isReact=react && react.filter(e=>e===userId).length>=1;
+  let isReact=react!== undefined && react.filter(e=>e===userId).length>=1;
   let handleHeart=async()=>{
     await reactToPost({postId:id,react:isReact,userId:userId,path:pathname})
   }
@@ -118,9 +118,9 @@ const CardPost = ({
               </div>
               {!isComment && commentsFilter.length > 0 && (
                 <Link href={`/post/${id}`}>
-                  <p className="mt-1 text-subtle-medium text-gray-1">{isReplay && 'you and '}
+                  {commLen>0?<p className="mt-1 text-subtle-medium text-gray-1">{isReplay && 'you and '}
                     {commLen} repl{commLen> 1 ? "ies" : "y"}
-                  </p>
+                  </p>:null}
                 </Link>
               )}
             </div>

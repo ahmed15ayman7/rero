@@ -52,7 +52,10 @@ const ProfileHeader = ({
     });
   };
   let handleAddMember = async () => {
-    await addMemberToCommunity(accountId, userAuthId, pathname, isFriend);
+    if(friends !== undefined){
+      let isSubscribed=friends.filter((e) => e._id ===userId).length >= 1;
+      await addMemberToCommunity(accountId, userId, pathname, isSubscribed);
+    }
   };
   let regLink=/https?:\/\/((www.)?\w+\d*.?\w*\/?)+/ig;
   let islink=bio.match(regLink)
@@ -64,8 +67,8 @@ const ProfileHeader = ({
             <Image
               src={image}
               alt={name}
-              width={60}
-              height={60}
+              width={90}
+              height={90}
               className="rounded-full object-cover shadow-2xl"
             />
             <div className="flex flex-col gap-3">
@@ -78,7 +81,7 @@ const ProfileHeader = ({
         <div className="mt-12"></div>
       </div>
       <div className="flex flex-col w-1/2 justify-between items-end gap-8">
-        { userId === userAuthId || myId? (
+        { userId === userAuthId || myId?.includes('org')? (
           <div className="">
             <Link href={`/profile/edit/${type === "Community" ?(myId?myId:userId):userId}`} className="flex gap-4 cursor-pointer">
               <span className=" text-white  max-lg:hidden">edit</span>
@@ -144,7 +147,7 @@ const ProfileHeader = ({
           </div>
         ) : null}
         <div className="ml-2 mt-3 flex content-end   items-center gap-2">
-              <p
+              {friends?.length !==0 &&<p
                 className="rounded-full text-white justify-center cursor-pointer items-center  bg-primary-500 flex"
                 style={{
                   width: "30px",
@@ -155,7 +158,7 @@ const ProfileHeader = ({
                 }}>
                   
                 +{friends?.length}
-              </p>
+              </p>}
           {friends && 
             friends.map((friend, index) => {
               return (

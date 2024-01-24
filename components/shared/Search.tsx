@@ -1,3 +1,4 @@
+'use client'
 import { fetchCommunities } from "@/lib/actions/community.actions";
 import { fetchAllUser } from "@/lib/actions/user.actions";
 import React, { useState } from "react";
